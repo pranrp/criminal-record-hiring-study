@@ -1,6 +1,8 @@
-# Resume Evaluation System
+# Criminal Record Hiring Bias Research
 
-A system for evaluating resumes using AI models to assess attitudes toward applicants with criminal records.
+A research platform analyzing AI model attitudes toward job applicants with criminal records. This study evaluates bias patterns across multiple large language models in employment screening scenarios.
+
+The system processes resume evaluations using standardized prompts to measure hiring preferences, workplace stereotypes, and policy attitudes across OpenAI, Claude, and Mistral models.
 
 ## Files
 
