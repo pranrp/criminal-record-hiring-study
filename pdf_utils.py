@@ -85,7 +85,7 @@ page_groups = [
 def main():
     split_pdf(input_pdf_path, output_pdf_paths, page_groups)
     pdf_dir = "resumes/resume_extracted"
-    txt_dir = "resumes/txt_extracted"
+    txt_dir = "resumes/md_extracted"
     process_pdf_files(pdf_dir, txt_dir)
 
 if __name__ == "__main__":

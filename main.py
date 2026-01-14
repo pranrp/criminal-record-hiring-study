@@ -7,11 +7,12 @@ from config import OPENAI_MODELS_MAIN, CLAUDE_MODELS, MISTRAL_MODELS, CONFIG
 from prompts import GLOBAL_PROMPT_TEMPLATE
 from file_processor import process_file
 
+log_dir = os.getenv('OUTPUT_DIR', '.')
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('llm_processing.log'),
+        logging.FileHandler(os.path.join(log_dir, 'llm_processing.log')),
         logging.StreamHandler()
     ]
 )
@@ -25,15 +26,17 @@ def main():
     logger.info(f"Claude models to process: {CLAUDE_MODELS}")
     logger.info(f"Mistral models to process: {MISTRAL_MODELS}")
 
-    openai_output_directory = 'output_csvs_openai'
-    anthropic_output_directory = 'output_csvs_anthropic'
-    mistral_output_directory = 'output_csvs_mistral'
+    # Use OUTPUT_DIR env var for cloud, or local directories
+    output_base = os.getenv('OUTPUT_DIR', '.')
+    openai_output_directory = os.path.join(output_base, 'output_csvs_openai')
+    anthropic_output_directory = os.path.join(output_base, 'output_csvs_anthropic')
+    mistral_output_directory = os.path.join(output_base, 'output_csvs_mistral')
 
     os.makedirs(openai_output_directory, exist_ok=True)
     os.makedirs(anthropic_output_directory, exist_ok=True)
     os.makedirs(mistral_output_directory, exist_ok=True)
 
-    directory = 'resumes/txt_extracted'
+    directory = 'resumes/md_extracted'
     files = os.listdir(directory)
 
     tasks = []

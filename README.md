@@ -78,19 +78,12 @@ python cleanup.py
 
 ## Input/Output
 
-- **Input**: Resume text files in `resumes/txt_extracted/`
+- **Input**: Resume markdown files in `resumes/md_extracted/`
 - **Output**: CSV files in `output_csvs_openai/`, `output_csvs_anthropic/`, and `output_csvs_mistral/`
   - Each CSV contains: Model, Iteration, Q1-Q17, ManipulationCheck, ThoughtProcess
 
 ## Models Used
 
-- **OpenAI**: gpt-3.5-turbo-16k, gpt-4o, gpt-4o-mini, o1, o3-mini, o4-mini
+- **OpenAI**: gpt-4.1, gpt-4o, gpt-4.1-mini, gpt-5.1, o3-mini, o4-mini
 - **Claude**: claude-3-7-sonnet-20250219, claude-opus-4-1-20250805, claude-sonnet-4-20250514, claude-3-5-haiku-20241022
 - **Mistral**: ministral-3b-latest, ministral-8b-latest, mistral-large-latest, mistral-small-latest
-
-
-## Backup Files
-
-Original files are preserved in the `backup/` directory:
-- `main_fix.py` - Alternative version with different models
-- `cleanup_claude.py` - Claude-specific cleaning utility

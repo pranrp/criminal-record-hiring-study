@@ -16,7 +16,7 @@ from config import (
     CONFIG
 )
 from prompts import SYSTEM_PROMPT
-from utils import get_response_schema, get_claude_response_schema
+from utils import get_response_schema, get_claude_response_schema, get_mistral_response_schema
 
 logger = logging.getLogger(__name__)
 
@@ -67,8 +67,11 @@ def get_openai_score(prompt: str, model: str) -> str:
     response_schema = get_response_schema()
     
     try:
-        schema_support_models = ["gpt-4o", "gpt-4o-mini", "o1", "o3-mini", "o4-mini"]
+        schema_support_models = ["gpt-4o", "gpt-4o-mini", "gpt-4.1", "gpt-4.1-mini", "gpt-5.1", "o1", "o3-mini", "o4-mini"]
         use_schema = model in schema_support_models
+        
+        # Models that require max_completion_tokens instead of max_tokens
+        new_token_param_models = ["gpt-5.1", "o1", "o3-mini", "o4-mini"]
         
         if model in ['o1', 'o3-mini', 'o4-mini']:
             messages = [
@@ -78,6 +81,26 @@ def get_openai_score(prompt: str, model: str) -> str:
             create_kwargs = {
                 "model": model,
                 "messages": messages,
+                "response_format": {
+                    "type": "json_schema",
+                    "json_schema": {
+                        "name": "evaluation_response",
+                        "strict": True,
+                        "schema": response_schema
+                    }
+                }
+            }
+            response = openai_client.chat.completions.create(**create_kwargs)
+        elif model == "gpt-5.1":
+            # gpt-5.1 uses developer role and max_completion_tokens
+            messages = [
+                {"role": "developer", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": prompt}
+            ]
+            create_kwargs = {
+                "model": model,
+                "messages": messages,
+                "max_completion_tokens": 4096,
                 "response_format": {
                     "type": "json_schema",
                     "json_schema": {
@@ -209,17 +232,23 @@ def get_claude_score(prompt: str, model: str) -> str:
 def get_mistral_score(prompt: str, model: str) -> str:
     """Get score from Mistral API."""
     client = Mistral(api_key=MISTRAL_API_KEY)
-    response_schema = get_response_schema()
+    mistral_schema = get_mistral_response_schema()
     
     try:
-        json_instruction = get_json_structure_instruction()
-        full_prompt = SYSTEM_PROMPT + "\n\n" + prompt + json_instruction
+        full_prompt = SYSTEM_PROMPT + "\n\n" + prompt
         
         response = client.chat.complete(
             model=model,
             temperature=0.0,
             max_tokens=4096,
-            response_format={"type": "json_object"},
+            response_format={
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "evaluation_response",
+                    "strict": True,
+                    "schema": mistral_schema
+                }
+            },
             messages=[
                 {
                     "role": "user",
@@ -228,10 +257,10 @@ def get_mistral_score(prompt: str, model: str) -> str:
             ]
         )
         result = response.choices[0].message.content
-        logger.debug(f"Mistral JSON mode API call successful for model {model}")
+        logger.debug(f"Mistral structured output API call successful for model {model}")
         return result
     except Exception as e:
-        logger.error(f"Mistral JSON mode failed for {model}: {e}")
+        logger.error(f"Mistral structured output failed for {model}: {e}")
         raise
 
 

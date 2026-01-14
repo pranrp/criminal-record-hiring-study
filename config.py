@@ -35,7 +35,7 @@ QUESTION_RANGES = {
     17: (1, 2),
 }
 
-OPENAI_MODELS_MAIN = ["gpt-3.5-turbo-16k", "gpt-4o", "gpt-4o-mini", "o1", "o3-mini", "o4-mini"]
+OPENAI_MODELS_MAIN = ["gpt-4.1", "gpt-4o", "gpt-4.1-mini", "gpt-5.1", "o3-mini", "o4-mini"]
 MISTRAL_MODELS = ["ministral-3b-latest", "ministral-8b-latest", "mistral-large-latest", "mistral-small-latest"]
 CLAUDE_MODELS = [
     "claude-3-7-sonnet-20250219",      # Mapped from claude-3-5-sonnet (uses GPT-3.5 style JSON instructions)

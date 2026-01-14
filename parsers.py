@@ -16,6 +16,18 @@ def parse_scores(scores: str) -> List[int]:
     try:
         data = json.loads(scores)
         if isinstance(data, dict):
+            # Check for Mistral-style individual q1-q17 properties
+            if 'q1' in data and 'q17' in data:
+                numbers = []
+                for i in range(1, CONFIG['num_questions'] + 1):
+                    key = f'q{i}'
+                    if key in data:
+                        numbers.append(int(data[key]))
+                    else:
+                        break
+                if len(numbers) == CONFIG['num_questions']:
+                    return numbers
+            
             if 'scores' in data:
                 numbers = [int(x) for x in data['scores']]
                 if len(numbers) == CONFIG['num_questions']:
