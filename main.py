@@ -1,5 +1,6 @@
 """Main entry point."""
 import os
+import sys
 import logging
 import concurrent.futures
 
@@ -13,7 +14,7 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
         logging.FileHandler(os.path.join(log_dir, 'llm_processing.log')),
-        logging.StreamHandler()
+        logging.StreamHandler(sys.stdout)  # Use stdout (white) instead of stderr (red)
     ]
 )
 logger = logging.getLogger(__name__)

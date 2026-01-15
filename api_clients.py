@@ -312,6 +312,15 @@ def retry_request_claude(prompt: str, model: str, max_retries: int, retry_delay:
     for attempt in range(max_retries):
         try:
             return get_claude_score(prompt, model)
+        except anthropic.RateLimitError as e:
+            # 429 rate limit error - always retry with backoff
+            wait_time = min(
+                retry_delay * (CONFIG['exponential_backoff_base'] ** attempt),
+                CONFIG['exponential_backoff_max']
+            )
+            logger.warning(f"Claude rate limit 429 (attempt {attempt + 1}/{max_retries}), waiting {wait_time}s...")
+            time.sleep(wait_time)
+            continue
         except anthropic.InternalServerError as e:
             error_str = str(e).lower()
             if 'rate_limit' in error_str or 'overloaded' in error_str:
@@ -326,6 +335,16 @@ def retry_request_claude(prompt: str, model: str, max_retries: int, retry_delay:
             logger.error(f"Non-retryable Claude error: {e}")
             raise
         except Exception as e:
+            error_str = str(e).lower()
+            # Check if it's a rate limit error in disguise
+            if '429' in str(e) or 'rate_limit' in error_str:
+                wait_time = min(
+                    retry_delay * (CONFIG['exponential_backoff_base'] ** attempt),
+                    CONFIG['exponential_backoff_max']
+                )
+                logger.warning(f"Claude rate limit (attempt {attempt + 1}/{max_retries}), waiting {wait_time}s...")
+                time.sleep(wait_time)
+                continue
             logger.error(f"Unexpected error in Claude retry (attempt {attempt + 1}/{max_retries}): {e}")
             if attempt == max_retries - 1:
                 raise
@@ -355,6 +374,16 @@ def retry_request_mistral(prompt: str, model: str, max_retries: int, retry_delay
             logger.error(f"Non-retryable Mistral HTTP error: {e}")
             raise
         except Exception as e:
+            error_str = str(e).lower()
+            # Check for rate limit errors (429, rate_limit, too many requests)
+            if '429' in str(e) or 'rate_limit' in error_str or 'too many requests' in error_str or 'rate limit' in error_str:
+                wait_time = min(
+                    retry_delay * (CONFIG['exponential_backoff_base'] ** attempt),
+                    CONFIG['exponential_backoff_max']
+                )
+                logger.warning(f"Mistral rate limit (attempt {attempt + 1}/{max_retries}), waiting {wait_time}s...")
+                time.sleep(wait_time)
+                continue
             logger.error(f"Unexpected error in Mistral retry (attempt {attempt + 1}/{max_retries}): {e}")
             if attempt == max_retries - 1:
                 raise
