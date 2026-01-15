@@ -1,33 +1,60 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
-# Debug info
-pwd
-ls -la
+echo "=== TEST RUN START ==="
 
-# Create fake output dirs
-mkdir -p /app/output_csvs_openai
-mkdir -p /app/output_csvs_anthropic
-mkdir -p /app/output_csvs_mistral
+# -----
+# 0) Required env vars
+# -----
+: "${GDRIVE_SERVICE_ACCOUNT_JSON:?Missing GDRIVE_SERVICE_ACCOUNT_JSON}"
+: "${FOLDER_ID:?Missing FOLDER_ID}"
 
-# Create test CSVs
-echo "id,value" > /app/output_csvs_openai/test_openai.csv
-echo "id,value" > /app/output_csvs_anthropic/test_anthropic.csv
-echo "id,value" > /app/output_csvs_mistral/test_mistral.csv
-
+# -----
+# 1) Check rclone exists
+# -----
+echo "Checking rclone..."
+which rclone
 rclone version
 
-# Setup rclone
-mkdir -p ~/.config/rclone
-cat > ~/.config/rclone/rclone.conf <<EOF
+# -----
+# 2) Write service account JSON safely
+# -----
+RCLONE_DIR="/root/.config/rclone"
+mkdir -p "${RCLONE_DIR}"
+
+echo "Writing service account JSON..."
+printf "%s" "${GDRIVE_SERVICE_ACCOUNT_JSON}" > "${RCLONE_DIR}/sa.json"
+
+# Validate JSON
+python - <<'PY'
+import json
+json.load(open("/root/.config/rclone/sa.json"))
+print("Service account JSON is valid")
+PY
+
+# -----
+# 3) Write rclone config
+# -----
+cat > "${RCLONE_DIR}/rclone.conf" <<EOF
 [gdrive]
 type = drive
 scope = drive
-service_account_credentials = ${GDRIVE_SERVICE_ACCOUNT_JSON}
+service_account_file = ${RCLONE_DIR}/sa.json
 root_folder_id = ${FOLDER_ID}
 EOF
 
-# Upload
-rclone copy /app/output_csvs_openai gdrive:output_csvs_openai --progress
-rclone copy /app/output_csvs_anthropic gdrive:output_csvs_anthropic --progress
-rclone copy /app/output_csvs_mistral gdrive:output_csvs_mistral --progress
+echo "rclone config written"
+
+# -----
+# 4) Create a fake test file
+# -----
+echo "Creating test file..."
+echo "hello from railway test run" > /app/test_upload.txt
+
+# -----
+# 5) Upload test file
+# -----
+echo "Uploading test file to Google Drive..."
+rclone copy /app/test_upload.txt gdrive:test_run --progress
+
+echo "=== TEST RUN COMPLETE ==="
